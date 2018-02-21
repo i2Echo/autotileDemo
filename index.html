@@ -1,0 +1,66 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>A simple autotile demo</title>
+    <style>
+      .gameCanvas {
+        position: absolute;
+      }
+      #imgSource {
+        position: absolute;
+        width: 250px;
+        height: 620px;
+        left: 460px;
+        top: 5px;
+        overflow: auto;
+        box-shadow: 0 2px 2px 0 rgba(0,0,0,.14),
+                    0 3px 1px -2px rgba(0,0,0,.2), 
+                    0 1px 5px 0 rgba(0,0,0,.12);
+      }
+      #imgSelection{
+        position: absolute;
+        z-index:75;
+        width:26px;
+        height:26px;
+        margin: 3px 0 0 3px;
+        padding:0;
+        /* display: none; */
+        box-sizing: border-box;
+        background-color:rgba(255, 255, 255, 0.0);
+        border: 1px solid #000;
+        box-shadow: 0 0 0 2px #fff,
+                    0 0 0 3px #000;
+      }
+      .showtip{
+        position: absolute;
+        width: 400px;
+        height: 200px;
+        top: 450px;
+        left: 10px;
+        line-height: 24px;
+        font-size: 18px;
+        color: #F44336;
+        font-weight: 700;
+      }
+      body,div,img{margin:0;padding:0;}
+    </style>
+  </head>
+  <body>
+    <!-- <canvas class='gameCanvas' id='grasspic' width='96' height='128' style='z-index:3;top:208px;left:465px'></canvas>
+    <canvas class='gameCanvas' id='grass_pic' width='530' height='64' style='z-index:3;top:368px;left:465px'></canvas> -->
+
+    <canvas class='gameCanvas' id='mapLayer' width='416' height='416' style='z-index:2'></canvas>
+    <canvas class='gameCanvas' id='drawLayer' width='416' height='416' style='z-index:100'></canvas>
+    <canvas class='gameCanvas' id='bgLayer' width='416' height='416' style='z-index:0'></canvas>
+    <p class="showtip">说明：右侧可通过选择框选择要画的图片；若为空白框则表示清除块，可用于擦除左侧的块。</p>
+    <div id="imgSource">
+      <canvas class='gameCanvas' id='preDraw' width='250' height='250'></canvas>
+      <div id="selectBox">
+        <div id='imgSelection'></div>
+      </div>
+    </div>
+    
+    <script type="text/javascript" src="autotile.js"></script>
+  </body>
+</html>

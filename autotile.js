@@ -1,23 +1,17 @@
-<!doctype html>
-<html><head><meta charset="utf-8">
-<style>
-.gameCanvas {
-  position: absolute;
-}
-body,div,img{margin:0;padding:0;}
-</style>
-</head><body>
-<canvas class='gameCanvas' id='grasspic' width='96' height='128' style='z-index:3;top:208px;left:465px'></canvas>
-<canvas class='gameCanvas' id='grass_pic' width='530' height='64' style='z-index:3;top:368px;left:465px'></canvas>
+// Global
+var autotileImgs = []; // 存放加载后的图片资源
+var imgNames = []; // 存放图片名id
+var map = []; // 存放地图数据
+var selectedInfo; //存放当前选中的图片信息
 
-<canvas class='gameCanvas' id='grassLayer' width='416' height='416' style='z-index:2'></canvas>
-<canvas class='gameCanvas' id='ui' width='416' height='416' style='z-index:100'></canvas>
-<canvas class='gameCanvas' id='data' width='416' height='416' style='z-index:0'></canvas>
-<p class='gameCanvas' id='pout' style='top:8px;left:500px' >通过鼠标拖拽或点击添加草地</p>
+var mapLayer = document.querySelector('#mapLayer')
+var drawLayer = document.querySelector('#drawLayer')
+var bgLayer = document.querySelector('#bgLayer')
+var preDraw = document.querySelector('#preDraw')
 
+for(i=0; i<15; i++)
+  imgNames[i] = i+1
 
-
-<script type="text/javascript">
 //加载图片
 var loadImg = function(url){
   return new Promise(function(resolve, reject){
@@ -31,21 +25,33 @@ var loadImg = function(url){
     }
   })
 }
-var autotileImg;
+var loadAllImg = function(){
+  var p = imgNames.map(function(im){
+    var url = 'img/autotile' + im + '.png'
+    return loadImg(url).then(function(image){
+      var autotile = {}
+      autotile.id = im
+      autotile.image = image
+      autotileImgs.push(autotile)
+    }).catch(function(err){
+      console.log("image load error", err)
+    })
+  })
+
+  return Promise.all(p)
+}
 var init = function(){
-  var imgUrl = 'img/autotile3.png';
-  loadImg(imgUrl).then(function(img){
-    drawStatus(img);
-    autotileImg = img;
+  loadAllImg().then(function(){
+    imgDataInit();
     mapInit();
     listen();
   })
 }
-var drawStatus = function(img){ //画出16种状态
+// var drawStatus = function(img){ //画出16种状态
 
-  var cxt = grasspic.getContext("2d");
-  var cxt_= grass_pic.getContext("2d");
-  cxt.drawImage(img,0,0);
+//   var cxt = grasspic.getContext("2d");
+//   var cxt_= grass_pic.getContext("2d");
+//   cxt.drawImage(img,0,0);
 
   //0草，1水 或者说0是不会变化的区域，1是会变化的区域， 数组注释分别为1-48的块索引
   // 0 | 0
@@ -113,15 +119,14 @@ var drawStatus = function(img){ //画出16种状态
   // 1 | 1
 
   //end
-  cxt_.clearRect(0, 0, 32,32);
-  cxt_=grass_pic.getContext("2d");
-  for(var i=0;i<16;i++)
-    for(var j=0;j<4;j++){
-      var dx = i*33 + 16*(j%2), dy = 16*(~~(j/2));
-      drawBlockByIndex(cxt_, dx, dy, img, indexArrs[i][j])
-    }
-      
-}
+//   cxt_.clearRect(0, 0, 32,32);
+//   cxt_=grass_pic.getContext("2d");
+//   for(var i=0;i<16;i++)
+//     for(var j=0;j<4;j++){
+//       var dx = i*33 + 16*(j%2), dy = 16*(~~(j/2));
+//       drawBlockByIndex(cxt_, dx, dy, img, indexArrs[i][j])
+//     }
+// }
 var indexArrs = [ //16种组合的图块索引数组; // 将autotile分割成48块16*16的小块; 数组索引即对应各个小块
   //                                       +----+----+----+----+----+----+
     [10,  9,  4, 3 ],  //0   bin:0000      | 1  | 2  | 3  | 4  | 5  | 6  |
@@ -145,11 +150,9 @@ var drawBlockByIndex = function(ctx, dx, dy, autotileImg, index){ //index为auto
   var sx = 16*((index-1)%6), sy = 16*(~~((index-1)/6));
     ctx.drawImage(autotileImg, sx, sy, 16, 16, dx, dy, 16, 16);
 }
-var drawMap = function(img){
-  
-  var isAutotile = function(id){
-    if(id == 1) return true;
-    return false;
+var drawMap = function(){
+  function isAutotile(id){
+    return Boolean(id)
   }
   var getAutotileAroundId = function(currId, x, y){ //与autotile当前id一致返回1，否则返回0
     if(x>=0 && y >=0 && x<13 && y<13 && map[y][x] == currId)
@@ -186,7 +189,7 @@ var drawMap = function(img){
   var drawAutotile = function(ctx, x, y, autotileImg){ // 绘制一个autotile
     var blockIndexs = getAutotileIndexArr(x, y)
     ctx.clearRect(x*32, y*32, 32, 32);
-    //修正四个边角的固定搭配
+    //修正四个边角的固定搭配，借助数字版autotile
     if(blockIndexs[0] == 13){
       if(blockIndexs[1] == 16) blockIndexs[1] = 14;
       if(blockIndexs[2] == 31) blockIndexs[2] = 19;
@@ -209,37 +212,74 @@ var drawMap = function(img){
       drawBlockByIndex(ctx, dx, dy, autotileImg, index);
     }
   }
-  var ctx = grassLayer.getContext("2d");
-
+  var cxt = mapLayer.getContext("2d");
+  function drawTile(cxt, x, y, tileInfo){
+    cxt.clearRect(x*32, y*32, 32, 32);
+    if(tileInfo == 0) return;
+    // 如果设置了普通图片资源则可在下面绘制
+  }
+  function getImgById(id){
+    for(var i=0; i<autotileImgs.length; i++){
+      if(autotileImgs[i].id == id)
+        return autotileImgs[i].image
+    }
+  }
   for(var y=0; y<13; y++){
     for(var x = 0; x<13; x++){
       var id = map[y][x];
       if(isAutotile(id)){
-        drawAutotile(ctx, x, y, autotileImg);
+        drawAutotile(cxt, x, y, getImgById(id));
+      }else{
+        drawTile(cxt, x, y, id)
       }
     }
   }
 }
-var mapInit = function(){//在data内画一个13*13的灰白相间的格子
-  var dc=data.getContext('2d');
-  var colorA=["#f8f8f8","#cccccc"];
-  var colorIndex =1;
-  for(var ii=0;ii<13;ii++)
-  for(var jj=0;jj<13;jj++){
-    dc.fillStyle=colorA[colorIndex];
-    colorIndex=1-colorIndex;
-    dc.fillRect(ii*32,jj*32,32,32);
+var mapInit = function(){ // 初始化地图背景层及其数组
+
+  var cxt = bgLayer.getContext('2d');
+  var colors=["#f8f8f8","#cccccc"];
+
+  for(var y=0; y<13; y++){
+    map[y] = [];
+    for(var x = 0; x<13; x++){
+      map[y][x] = 0; // 地图数组初始化为0
+
+      //在背景层内画一个13*13的灰白相间的格子
+      cxt.fillStyle = colors[(x + y + 1) % 2];
+      cxt.fillRect(y*32, x*32, 32, 32);
+    }
+  }
+}
+var imgDataInit = function(){
+  var cxt = preDraw.getContext('2d')
+  var x = 1, y = 0;
+  var pos = {};
+  console.log(autotileImgs)
+  preDraw.height = 8 * 4 * 32;
+  for(var i=0; i<autotileImgs.length; i++){
+    if(i > 7 && x==1){
+      x += 3;
+      y = 0;
+    }
+    cxt.drawImage(autotileImgs[i].image, x*32, y*32)
+    pos = { x: x, y: y};
+    autotileImgs[i].pos = JSON.parse(JSON.stringify(pos));
+    y += 4;
   }
 }
 var listen = function(){
-  var uc=ui.getContext('2d');
+  var cxt = drawLayer.getContext('2d');
 
   function fillPos(pos){
-  uc.fillStyle='#'+~~(Math.random()*8)+~~(Math.random()*8)+~~(Math.random()*8);
-  uc.fillRect(pos.x*32+12,pos.y*32+12,8,8);
+    cxt.fillStyle='#'+~~(Math.random()*8)+~~(Math.random()*8)+~~(Math.random()*8);
+    cxt.fillRect(pos.x*32+12,pos.y*32+12,8,8);
   }//在格子内画一个随机色块
 
-  function eToLoc(e){var loc={'x':e.clientX-ui.offsetLeft,'y':e.clientY-ui.offsetTop,'size':32};return loc;}//返回可用的组件内坐标
+  function eToLoc(e){//返回可用的组件内坐标
+    var loc = {'x':e.clientX-drawLayer.offsetLeft,'y':e.clientY-drawLayer.offsetTop,'size':32};
+    return loc;
+  }//返回可用的组件内坐标
 
   function locToPos(loc){
     pos={'x':~~(loc.x/loc.size),'y':~~(loc.y/loc.size)}
@@ -258,23 +298,23 @@ var listen = function(){
     }
     holdingPath=0;
     stepPostfix=[];
-    uc.clearRect(0, 0, 416,416);
+    cxt.clearRect(0, 0, 416,416);
   }//用于鼠标移出canvas时的自动清除状态
 
-  ui.onmousedown = function(e) {
+  drawLayer.onmousedown = function(e) {
     holdingPath=1;
     mouseOutCheck =2;
     setTimeout(clear1);
     e.stopPropagation();
-    uc.clearRect(0, 0, 416,416);
-    var loc =eToLoc(e);
+    cxt.clearRect(0, 0, 416,416);
+    var loc = eToLoc(e);
     pos=locToPos(loc)
     stepPostfix=[];
     stepPostfix.push(pos);
     fillPos(pos);
   }
 
-  ui.onmousemove = function(e) {
+  drawLayer.onmousemove = function(e) {
 
     if (holdingPath==0){return;}
     mouseOutCheck =2;
@@ -299,27 +339,103 @@ var listen = function(){
     }
   }
 
-  ui.onmouseup = function(e) {
+  drawLayer.onmouseup = function(e) {
     holdingPath=0;
     e.stopPropagation();
     var loc =eToLoc(e);
     if(stepPostfix.length){
       console.log(stepPostfix);
       for(var ii=0;ii<stepPostfix.length;ii++)
-        map[stepPostfix[ii].y][stepPostfix[ii].x]=1;
+        map[stepPostfix[ii].y][stepPostfix[ii].x] = typeof selectedInfo == 'object' ? selectedInfo.id : selectedInfo;
       // console.log(map);
       drawMap();
     }
   }
+  // 监听图片区定位选择框
+  preDraw.onmousedown = function (e) {
+    e.stopPropagation();
+    var scrollLeft = document.documentElement.scrollLeft || document.body.scrollLeft
+    var scrollTop = document.documentElement.scrollTop || document.body.scrollTop
+    var loc = { 
+      'x': scrollLeft + e.clientX + imgSource.scrollLeft - imgSource.offsetLeft, 
+      'y': scrollTop + e.clientY + imgSource.scrollTop - imgSource.offsetTop, 
+      'size': 32 
+    };
+    var pos = locToPos(loc);
+    console.log(pos)
+    if(pos.x < 1){
+      pos.y = 0
+      selectedInfo = 0;
+    }else{
+      for(var i=0; i < autotileImgs.length; i++){
+        var py = autotileImgs[i].pos.y;
+        var px = autotileImgs[i].pos.x;
+        if(pos.x < 4){
+          if(px < 4 && pos.y >= py && pos.y < py + 4){
+            pos.x = 1;
+            pos.y = py;
+            selectedInfo = autotileImgs[i];
+            break;
+          }
+        }else if( px >= 4 && pos.y >= py && pos.y < py + 4){
+          pos.x = 4;
+          pos.y = py;
+          selectedInfo = autotileImgs[i];
+          break;
+        }
+      }
+    }
+    imgSelection.style.left = pos.x*32 +'px';
+    imgSelection.style.top = pos.y*32 +'px';
 
-}
-var map = [];
-for(var y=0; y<13; y++){
-  map[y] = [];
-  for(var x = 0; x<13; x++){
-    map[y][x] = 0;
+    // for (var spriter in editor.widthsX){
+    //   if(pos.x>=editor.widthsX[spriter][1] && pos.x<editor.widthsX[spriter][2]){
+    //     pos.x=editor.widthsX[spriter][1];
+    //     pos.images = editor.widthsX[spriter][0];
+    //     var autotiles = editor.material.images['autotile'];
+    //     if(pos.images=='autotile'){
+    //       var imNames = Object.keys(autotiles);
+    //       if((pos.y+1)*32 > editor.widthsX[spriter][3])
+    //         pos.y = ~~(editor.widthsX[spriter][3]/32)-4;
+    //       else{
+    //         for(var i=0; i<imNames.length; i++){
+    //           if(pos.y >= 4*i && pos.y < 4*(i+1)){
+    //             pos.images = imNames[i];
+    //             pos.y = 4*i;
+    //           }
+    //         }
+    //       }
+    //     }else if((pos.y+1)*32 > editor.widthsX[spriter][3])
+    //       pos.y = ~~(editor.widthsX[spriter][3]/32)-1;
+        
+    //     selectBox.isSelected = true;
+    //     // console.log(pos,editor.material.images[pos.images].height)
+    //     dataSelection.style.left = pos.x*32 +'px';
+    //     dataSelection.style.top = pos.y*32 +'px';
+        
+    //     if(pos.x==0&&pos.y==0){
+    //       // editor.info={idnum:0, id:'empty','images':'清除块', 'y':0};
+    //       editor.info=0;
+    //     }else{
+    //       if(hasOwnProp(autotiles, pos.images)) editor.info={'images':pos.images, 'y':0};
+    //       else if(pos.images == 'terrains') editor.info={'images':pos.images, 'y':pos.y-1};
+    //       else editor.info={'images':pos.images, 'y':pos.y};
+
+    //       for (var ii=0;ii<editor.ids.length;ii++){
+    //         if( ( editor.info.images==editor.ids[ii].images 
+    //             && editor.info.y==editor.ids[ii].y )
+    //             || (hasOwnProp(autotiles, pos.images) && editor.info.images==editor.ids[ii].id 
+    //             && editor.info.y==editor.ids[ii].y)){
+
+    //           editor.info = editor.ids[ii];
+    //           break;
+    //         }
+    //       }
+    //     }
+    //     tip.infos = JSON.parse(JSON.stringify(editor.info));
+    //   }
+    // }
   }
 }
+
 init();
-</script>
-</html>
