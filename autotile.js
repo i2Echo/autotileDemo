@@ -293,7 +293,7 @@ var listen = function(){
   function clear1(){
     if(mouseOutCheck >1){
       mouseOutCheck--;
-      setTimeout(clear1,1000);
+      setTimeout(clear1,500);
       return;
     }
     holdingPath=0;
@@ -377,64 +377,21 @@ var listen = function(){
             selectedInfo = autotileImgs[i];
             break;
           }
-        }else if( px >= 4 && pos.y >= py && pos.y < py + 4){
-          pos.x = 4;
-          pos.y = py;
-          selectedInfo = autotileImgs[i];
-          break;
+        }else{
+          if(pos.y >= 7*4){
+            pos.y = pos.y - 3
+          }
+          if( px >= 4 && pos.y >= py && pos.y < py + 4){
+            pos.x = 4;
+            pos.y = py;
+            selectedInfo = autotileImgs[i];
+            break;
+          }
         }
       }
     }
     imgSelection.style.left = pos.x*32 +'px';
     imgSelection.style.top = pos.y*32 +'px';
-
-    // for (var spriter in editor.widthsX){
-    //   if(pos.x>=editor.widthsX[spriter][1] && pos.x<editor.widthsX[spriter][2]){
-    //     pos.x=editor.widthsX[spriter][1];
-    //     pos.images = editor.widthsX[spriter][0];
-    //     var autotiles = editor.material.images['autotile'];
-    //     if(pos.images=='autotile'){
-    //       var imNames = Object.keys(autotiles);
-    //       if((pos.y+1)*32 > editor.widthsX[spriter][3])
-    //         pos.y = ~~(editor.widthsX[spriter][3]/32)-4;
-    //       else{
-    //         for(var i=0; i<imNames.length; i++){
-    //           if(pos.y >= 4*i && pos.y < 4*(i+1)){
-    //             pos.images = imNames[i];
-    //             pos.y = 4*i;
-    //           }
-    //         }
-    //       }
-    //     }else if((pos.y+1)*32 > editor.widthsX[spriter][3])
-    //       pos.y = ~~(editor.widthsX[spriter][3]/32)-1;
-        
-    //     selectBox.isSelected = true;
-    //     // console.log(pos,editor.material.images[pos.images].height)
-    //     dataSelection.style.left = pos.x*32 +'px';
-    //     dataSelection.style.top = pos.y*32 +'px';
-        
-    //     if(pos.x==0&&pos.y==0){
-    //       // editor.info={idnum:0, id:'empty','images':'清除块', 'y':0};
-    //       editor.info=0;
-    //     }else{
-    //       if(hasOwnProp(autotiles, pos.images)) editor.info={'images':pos.images, 'y':0};
-    //       else if(pos.images == 'terrains') editor.info={'images':pos.images, 'y':pos.y-1};
-    //       else editor.info={'images':pos.images, 'y':pos.y};
-
-    //       for (var ii=0;ii<editor.ids.length;ii++){
-    //         if( ( editor.info.images==editor.ids[ii].images 
-    //             && editor.info.y==editor.ids[ii].y )
-    //             || (hasOwnProp(autotiles, pos.images) && editor.info.images==editor.ids[ii].id 
-    //             && editor.info.y==editor.ids[ii].y)){
-
-    //           editor.info = editor.ids[ii];
-    //           break;
-    //         }
-    //       }
-    //     }
-    //     tip.infos = JSON.parse(JSON.stringify(editor.info));
-    //   }
-    // }
   }
 }
 
